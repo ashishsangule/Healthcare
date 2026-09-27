@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+
+        <span class="badge">
+            OVERVIEW
+        </span>
+
+        <h1>Clinic Dashboard</h1>
+
+        <p>
+            Monitor appointments and emergency coordination.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="stats-grid">
+
+    <div class="stat-card">
+
+        <div class="stat-icon">👥</div>
+
+        <div>
+            <p>Total Patients</p>
+            <h2>{{ patients }}</h2>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">📅</div>
+
+        <div>
+            <p>Appointments</p>
+            <h2>{{ appointments }}</h2>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">⏳</div>
+
+        <div>
+            <p>Pending</p>
+            <h2>{{ pending_appointments }}</h2>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card emergency-stat">
+
+        <div class="stat-icon">🚑</div>
+
+        <div>
+            <p>Ambulance</p>
+            <h2>{{ ambulance_requests }}</h2>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card blood-stat">
+
+        <div class="stat-icon">🩸</div>
+
+        <div>
+            <p>Blood Requests</p>
+            <h2>{{ blood_requests }}</h2>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="dashboard-grid">
+
+    <div class="panel">
+
+        <h2>Quick Actions</h2>
+
+        <div class="quick-actions">
+
+            <a href="/patients" class="quick-btn">
+                👤 Add Patient
+            </a>
+
+            <a href="/appointments" class="quick-btn">
+                📅 Book Appointment
+            </a>
+
+            <a href="/ambulance" class="quick-btn">
+                🚑 Ambulance Request
+            </a>
+
+            <a href="/blood" class="quick-btn">
+                🩸 Blood Requirement
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="panel">
+
+        <h2>System Overview</h2>
+
+        <canvas id="statsChart"></canvas>
+
+    </div>
+
+</div>
+
+{% endblock %}

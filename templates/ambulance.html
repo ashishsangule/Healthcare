@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+
+        <span class="badge emergency-badge">
+            EMERGENCY
+        </span>
+
+        <h1>Ambulance Coordination</h1>
+
+        <p>
+            Submit and manage ambulance requests.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="two-column">
+
+
+<div class="panel emergency-panel">
+
+    <h2>Request Ambulance</h2>
+
+    <form action="/ambulance/add" method="POST">
+
+
+        <label>Patient Name</label>
+
+        <input
+            type="text"
+            name="patient_name"
+            required
+        >
+
+
+        <label>Contact Number</label>
+
+        <input
+            type="tel"
+            name="phone"
+            required
+        >
+
+
+        <label>Pickup Location</label>
+
+        <input
+            type="text"
+            name="pickup_location"
+            placeholder="Kothrud, Pune"
+            required
+        >
+
+
+        <label>Destination</label>
+
+        <input
+            type="text"
+            name="destination"
+            placeholder="Hospital"
+        >
+
+
+        <label>Emergency Level</label>
+
+        <select name="emergency_level">
+
+            <option>High</option>
+
+            <option>Medium</option>
+
+            <option>Low</option>
+
+        </select>
+
+
+        <button class="btn emergency" type="submit">
+
+            🚑 Request Ambulance
+
+        </button>
+
+    </form>
+
+</div>
+
+
+<div class="panel">
+
+    <h2>Requests</h2>
+
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Patient</th>
+
+                    <th>Pickup</th>
+
+                    <th>Destination</th>
+
+                    <th>Level</th>
+
+                    <th>Status</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for item in requests %}
+
+                <tr>
+
+                    <td>
+                        {{ item["patient_name"] }}
+                    </td>
+
+                    <td>
+                        {{ item["pickup_location"] }}
+                    </td>
+
+                    <td>
+                        {{ item["destination"] }}
+                    </td>
+
+                    <td>
+
+                        <span class="priority">
+                            {{ item["emergency_level"] }}
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <span class="status requested">
+
+                            {{ item["status"] }}
+
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="5" class="empty">
+                        No ambulance requests.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

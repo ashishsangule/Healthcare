@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+          content="CareConnect - Healthcare Coordination Platform">
+
+    <meta name="theme-color"
+          content="#2563eb">
+
+    <title>
+        {% block title %}CareConnect{% endblock %}
+    </title>
+
+    <!-- Google Font -->
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <!-- CareConnect CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+
+    <header class="topbar">
+
+        <a href="{{ url_for('index') }}"
+           class="brand">
+
+            <span class="brand-mark">
+                ♥
+            </span>
+
+            <span>
+                CareConnect
+            </span>
+
+        </a>
+
+
+        <nav class="nav">
+
+            <a href="{{ url_for('dashboard') }}">
+                Dashboard
+            </a>
+
+            <a href="{{ url_for('patients') }}">
+                Patients
+            </a>
+
+            <a href="{{ url_for('appointments') }}">
+                Appointments
+            </a>
+
+            <a href="{{ url_for('ambulance') }}">
+                Ambulance
+            </a>
+
+            <a href="{{ url_for('blood') }}">
+                Blood
+            </a>
+
+            <a href="{{ url_for('facilities') }}">
+                Facilities
+            </a>
+
+        </nav>
+
+    </header>
+
+
+    <!-- ================= FLASH MESSAGES ================= -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+
+            <div class="flash-wrap">
+
+                {% for category, message in messages %}
+
+                    <div class="flash {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- ================= MAIN CONTENT ================= -->
+
+    <main class="container">
+
+        {% block content %}
+
+        {% endblock %}
+
+    </main>
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer>
+
+        <strong>
+            CareConnect
+        </strong>
+
+        <span>
+            Healthcare Coordination Platform
+        </span>
+
+        <span>
+            Administrative & Emergency Coordination
+        </span>
+
+        <span>
+            No diagnosis or treatment recommendations
+        </span>
+
+        <span>
+            © 2026 CareConnect
+        </span>
+
+    </footer>
+
+
+    <!-- JavaScript -->
+
+    <script src="{{ url_for('static', filename='js/app.js') }}">
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+
+        <span class="badge">FACILITIES</span>
+
+        <h1>Healthcare Facilities</h1>
+
+        <p>
+            Store basic clinic, hospital and blood-bank information.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="two-column">
+
+
+<div class="panel">
+
+    <h2>Add Facility</h2>
+
+    <form action="/facilities/add" method="POST">
+
+
+        <label>Facility Name</label>
+
+        <input
+            type="text"
+            name="name"
+            required
+        >
+
+
+        <label>Facility Type</label>
+
+        <select name="type">
+
+            <option>Hospital</option>
+
+            <option>Clinic</option>
+
+            <option>Blood Bank</option>
+
+        </select>
+
+
+        <label>Location</label>
+
+        <input
+            type="text"
+            name="location"
+            required
+        >
+
+
+        <label>Phone</label>
+
+        <input
+            type="tel"
+            name="phone"
+        >
+
+
+        <label>Emergency Available</label>
+
+        <select name="emergency_available">
+
+            <option>Yes</option>
+
+            <option>No</option>
+
+        </select>
+
+
+        <button class="btn primary" type="submit">
+
+            Add Facility
+
+        </button>
+
+    </form>
+
+</div>
+
+
+<div class="panel">
+
+    <h2>Facilities</h2>
+
+    <div class="facility-grid">
+
+        {% for facility in facilities %}
+
+        <div class="facility-card">
+
+            <span class="badge">
+
+                {{ facility["type"] }}
+
+            </span>
+
+            <h3>
+
+                {{ facility["name"] }}
+
+            </h3>
+
+            <p>
+                📍 {{ facility["location"] }}
+            </p>
+
+            <p>
+                📞 {{ facility["phone"] }}
+            </p>
+
+            <p>
+
+                🚨 Emergency:
+                <strong>
+                    {{ facility["emergency_available"] }}
+                </strong>
+
+            </p>
+
+        </div>
+
+        {% else %}
+
+        <p>
+            No facilities added.
+        </p>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

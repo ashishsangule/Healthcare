@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+
+        <span class="badge">PATIENTS</span>
+
+        <h1>Patient Management</h1>
+
+        <p>
+            Manage basic patient information.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="two-column">
+
+
+<div class="panel">
+
+    <h2>Add Patient</h2>
+
+    <form action="/patients/add" method="POST">
+
+        <label>Patient Name</label>
+
+        <input
+            type="text"
+            name="name"
+            required
+        >
+
+
+        <label>Phone</label>
+
+        <input
+            type="tel"
+            name="phone"
+            required
+        >
+
+
+        <label>Age</label>
+
+        <input
+            type="number"
+            name="age"
+            min="0"
+            max="120"
+        >
+
+
+        <label>Gender</label>
+
+        <select name="gender">
+
+            <option value="">Select</option>
+
+            <option>Male</option>
+
+            <option>Female</option>
+
+            <option>Other</option>
+
+        </select>
+
+
+        <label>Blood Group</label>
+
+        <select name="blood_group">
+
+            <option value="">Select</option>
+
+            <option>A+</option>
+            <option>A-</option>
+
+            <option>B+</option>
+            <option>B-</option>
+
+            <option>AB+</option>
+            <option>AB-</option>
+
+            <option>O+</option>
+            <option>O-</option>
+
+        </select>
+
+
+        <label>Location</label>
+
+        <input
+            type="text"
+            name="location"
+            placeholder="Pune"
+        >
+
+
+        <button class="btn primary" type="submit">
+            Add Patient
+        </button>
+
+    </form>
+
+</div>
+
+
+<div class="panel">
+
+    <div class="table-header">
+
+        <h2>Patients</h2>
+
+        <form method="GET" action="/patients">
+
+            <input
+                type="text"
+                name="search"
+                placeholder="Search..."
+                value="{{ search }}"
+            >
+
+        </form>
+
+    </div>
+
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Age</th>
+                    <th>Blood</th>
+                    <th>Location</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for patient in patients %}
+
+                <tr>
+
+                    <td>
+                        <strong>
+                            {{ patient["name"] }}
+                        </strong>
+                    </td>
+
+                    <td>
+                        {{ patient["phone"] }}
+                    </td>
+
+                    <td>
+                        {{ patient["age"] }}
+                    </td>
+
+                    <td>
+
+                        <span class="blood-badge">
+                            {{ patient["blood_group"] or "N/A" }}
+                        </span>
+
+                    </td>
+
+                    <td>
+                        {{ patient["location"] }}
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="5" class="empty">
+                        No patients found.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

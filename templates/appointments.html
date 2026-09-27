@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block title %}Appointments | CareConnect{% endblock %}
+
+{% block content %}
+
+<!-- ============================= -->
+<!-- PAGE HEADER -->
+<!-- ============================= -->
+
+<div class="page-title">
+
+    <div>
+
+        <span class="eyebrow blue">
+            APPOINTMENTS
+        </span>
+
+        <h1>Appointment Management</h1>
+
+        <p>
+            Book, schedule and manage clinic appointments.
+        </p>
+
+    </div>
+
+</div>
+
+
+<!-- ============================= -->
+<!-- MAIN CONTENT -->
+<!-- ============================= -->
+
+<div class="two-col">
+
+
+    <!-- ========================= -->
+    <!-- BOOK APPOINTMENT FORM -->
+    <!-- ========================= -->
+
+    <section class="panel form-panel">
+
+        <h2>Book Appointment</h2>
+
+        {% if patients %}
+
+        <form
+            method="POST"
+            action="{{ url_for('add_appointment') }}"
+        >
+
+            <!-- Patient -->
+
+            <label for="patient_id">
+                Patient *
+            </label>
+
+            <select
+                id="patient_id"
+                name="patient_id"
+                required
+            >
+
+                <option value="">
+                    Select Patient
+                </option>
+
+                {% for patient in patients %}
+
+                <option value="{{ patient.id }}">
+
+                    {{ patient.name }}
+
+                    {% if patient.phone %}
+                        — {{ patient.phone }}
+                    {% endif %}
+
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+
+            <!-- Doctor -->
+
+            <label for="doctor">
+                Doctor / Provider *
+            </label>
+
+            <input
+                type="text"
+                id="doctor"
+                name="doctor"
+                placeholder="Dr. Sharma"
+                required
+            >
+
+
+            <!-- Date + Time -->
+
+            <div class="form-row">
+
+                <div>
+
+                    <label for="appointment_date">
+                        Date *
+                    </label>
+
+                    <input
+                        type="date"
+                        id="appointment_date"
+                        name="appointment_date"
+                        min="{{ today }}"
+                        required
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <label for="appointment_time">
+                        Time *
+                    </label>
+
+                    <input
+                        type="time"
+                        id="appointment_time"
+                        name="appointment_time"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- Visit Note -->
+
+            <label for="reason">
+                Visit Note
+            </label>
+
+            <textarea
+                id="reason"
+                name="reason"
+                rows="4"
+                placeholder="Enter basic administrative visit information..."
+            ></textarea>
+
+
+            <!-- Submit -->
+
+            <button
+                type="submit"
+                class="btn primary"
+            >
+
+                📅 Book Appointment
+
+            </button>
+
+        </form>
+
+        {% else %}
+
+        <!-- No Patients -->
+
+        <div class="empty-box">
+
+            <strong>No patients available.</strong>
+
+            <p>
+                Add a patient before booking an appointment.
+            </p>
+
+        </div>
+
+        <a
+            href="{{ url_for('patients') }}"
+            class="btn primary"
+        >
+
+            👤 Add Patient
+
+        </a>
+
+        {% endif %}
+
+    </section>
+
+
+
+    <!-- ========================= -->
+    <!-- APPOINTMENT LIST -->
+    <!-- ========================= -->
+
+    <section class="panel">
+
+        <div class="panel-head">
+
+            <div>
+
+                <h2>Appointments</h2>
+
+                <p class="panel-subtitle">
+                    View and update appointment status.
+                </p>
+
+            </div>
+
+            <span class="tag">
+                {{ appointments|length }} Records
+            </span>
+
+        </div>
+
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Patient
+                        </th>
+
+                        <th>
+                            Provider
+                        </th>
+
+                        <th>
+                            Date
+                        </th>
+
+                        <th>
+                            Time
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for appointment in appointments %}
+
+                    <tr>
+
+
+                        <!-- PATIENT -->
+
+                        <td>
+
+                            <strong>
+                                {{ appointment.patient_name }}
+                            </strong>
+
+                            <small>
+                                {{ appointment.patient_phone }}
+                            </small>
+
+                        </td>
+
+
+                        <!-- DOCTOR -->
+
+                        <td>
+
+                            {{ appointment.doctor }}
+
+                            {% if appointment.reason %}
+
+                            <small>
+                                {{ appointment.reason }}
+                            </small>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- DATE -->
+
+                        <td>
+
+                            {{ appointment.appointment_date }}
+
+                        </td>
+
+
+                        <!-- TIME -->
+
+                        <td>
+
+                            {{ appointment.appointment_time }}
+
+                        </td>
+
+
+                        <!-- STATUS -->
+
+                        <td>
+
+                            <span
+                                class="status
+                                {{ appointment.status|lower|replace(' ', '-') }}"
+                            >
+
+                                {{ appointment.status }}
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- ACTIONS -->
+
+                        <td>
+
+                            <div class="action-group">
+
+
+                                {% if appointment.status != "Confirmed" %}
+
+                                <form
+                                    method="POST"
+                                    action="{{
+                                        url_for(
+                                            'update_appointment_status',
+                                            appointment_id=appointment.id,
+                                            status='Confirmed'
+                                        )
+                                    }}"
+                                >
+
+                                    <button
+                                        type="submit"
+                                        class="mini success"
+                                    >
+
+                                        Confirm
+
+                                    </button>
+
+                                </form>
+
+                                {% endif %}
+
+
+
+                                {% if appointment.status != "Completed" %}
+
+                                <form
+                                    method="POST"
+                                    action="{{
+                                        url_for(
+                                            'update_appointment_status',
+                                            appointment_id=appointment.id,
+                                            status='Completed'
+                                        )
+                                    }}"
+                                >
+
+                                    <button
+                                        type="submit"
+                                        class="mini"
+                                    >
+
+                                        Complete
+
+                                    </button>
+
+                                </form>
+
+                                {% endif %}
+
+
+
+                                {% if appointment.status != "Cancelled" %}
+
+                                <form
+                                    method="POST"
+                                    action="{{
+                                        url_for(
+                                            'update_appointment_status',
+                                            appointment_id=appointment.id,
+                                            status='Cancelled'
+                                        )
+                                    }}"
+                                >
+
+                                    <button
+                                        type="submit"
+                                        class="mini danger"
+                                    >
+
+                                        Cancel
+
+                                    </button>
+
+                                </form>
+
+                                {% endif %}
+
+
+                            </div>
+
+                        </td>
+
+
+                    </tr>
+
+                    {% else %}
+
+
+                    <!-- NO APPOINTMENTS -->
+
+                    <tr>
+
+                        <td
+                            colspan="6"
+                            class="empty"
+                        >
+
+                            <div class="empty-box">
+
+                                📅
+
+                                <strong>
+                                    No appointments yet
+                                </strong>
+
+                                <p>
+                                    Book the first appointment
+                                    using the form.
+                                </p>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- ============================= -->
+<!-- INFORMATION SECTION -->
+<!-- ============================= -->
+
+<section class="notice">
+
+    <div class="notice-icon">
+        ℹ
+    </div>
+
+    <div>
+
+        <strong>
+            Appointment Management
+        </strong>
+
+        <p>
+            This module is designed for administrative
+            scheduling and coordination only. It does not
+            provide medical diagnosis, treatment recommendations,
+            or clinical decision-making.
+        </p>
+
+    </div>
+
+</section>
+
+{% endblock %}

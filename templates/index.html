@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+CareConnect | Healthcare Coordination
+{% endblock %}
+
+
+{% block content %}
+
+
+<!-- ================= HERO ================= -->
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <span class="eyebrow">
+            SMART HEALTHCARE COORDINATION
+        </span>
+
+
+        <h1>
+            Healthcare coordination,
+            <br>
+            made simple.
+        </h1>
+
+
+        <p>
+            Manage patients, appointments,
+            ambulance requests, blood requirements
+            and healthcare facilities from one
+            simple platform.
+        </p>
+
+
+        <div class="hero-buttons">
+
+            <a href="{{ url_for('dashboard') }}"
+               class="btn primary">
+
+                📊
+                Open Dashboard
+
+            </a>
+
+
+            <a href="{{ url_for('appointments') }}"
+               class="btn secondary">
+
+                📅
+                Book Appointment
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- HERO CARD -->
+
+    <div class="hero-card">
+
+        <div class="hero-card-icon">
+            ♥
+        </div>
+
+
+        <h3>
+            CareConnect
+        </h3>
+
+
+        <p>
+            One platform for managing
+            everyday clinic coordination
+            and emergency support workflows.
+        </p>
+
+    </div>
+
+</section>
+
+
+
+<!-- ================= FEATURES ================= -->
+
+<section class="feature-grid">
+
+
+    <!-- PATIENTS -->
+
+    <a href="{{ url_for('patients') }}"
+       class="feature-card">
+
+        <div class="feature-icon">
+            👤
+        </div>
+
+
+        <h3>
+            Patient Management
+        </h3>
+
+
+        <p>
+            Maintain basic patient
+            information in one organized
+            place.
+        </p>
+
+    </a>
+
+
+
+    <!-- APPOINTMENTS -->
+
+    <a href="{{ url_for('appointments') }}"
+       class="feature-card">
+
+        <div class="feature-icon">
+            📅
+        </div>
+
+
+        <h3>
+            Appointments
+        </h3>
+
+
+        <p>
+            Book, schedule and update
+            appointment status easily.
+        </p>
+
+    </a>
+
+
+
+    <!-- AMBULANCE -->
+
+    <a href="{{ url_for('ambulance') }}"
+       class="feature-card">
+
+        <div class="feature-icon">
+            🚑
+        </div>
+
+
+        <h3>
+            Ambulance
+        </h3>
+
+
+        <p>
+            Coordinate emergency
+            transportation requests.
+        </p>
+
+    </a>
+
+
+
+    <!-- BLOOD -->
+
+    <a href="{{ url_for('blood') }}"
+       class="feature-card">
+
+        <div class="feature-icon">
+            🩸
+        </div>
+
+
+        <h3>
+            Blood Coordination
+        </h3>
+
+
+        <p>
+            Record and coordinate
+            blood-related requirements.
+        </p>
+
+    </a>
+
+</section>
+
+
+
+<!-- ================= EMERGENCY ================= -->
+
+<section class="notice emergency-notice">
+
+    <div class="notice-icon">
+        🚨
+    </div>
+
+
+    <div>
+
+        <strong>
+            Emergency Coordination
+        </strong>
+
+
+        <p>
+            Quickly organize ambulance
+            and blood-related requests
+            during urgent situations.
+        </p>
+
+
+        <a href="{{ url_for('ambulance') }}"
+           class="btn danger-btn">
+
+            🚑
+            Request Ambulance
+
+        </a>
+
+    </div>
+
+</section>
+
+
+{% endblock %}

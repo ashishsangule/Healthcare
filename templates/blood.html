@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+
+        <span class="badge blood-page-badge">
+            BLOOD COORDINATION
+        </span>
+
+        <h1>Blood Requirements</h1>
+
+        <p>
+            Search and report blood-related requirements.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="two-column">
+
+
+<div class="panel">
+
+    <h2>Report Blood Requirement</h2>
+
+    <form action="/blood/add" method="POST">
+
+
+        <label>Patient Name</label>
+
+        <input
+            type="text"
+            name="patient_name"
+            required
+        >
+
+
+        <label>Blood Group</label>
+
+        <select name="blood_group" required>
+
+            <option value="">Select</option>
+
+            <option>A+</option>
+            <option>A-</option>
+
+            <option>B+</option>
+            <option>B-</option>
+
+            <option>AB+</option>
+            <option>AB-</option>
+
+            <option>O+</option>
+            <option>O-</option>
+
+        </select>
+
+
+        <label>Units Required</label>
+
+        <input
+            type="number"
+            name="units"
+            min="1"
+            value="1"
+            required
+        >
+
+
+        <label>Location</label>
+
+        <input
+            type="text"
+            name="location"
+            placeholder="Pune"
+            required
+        >
+
+
+        <label>Contact</label>
+
+        <input
+            type="tel"
+            name="contact"
+            required
+        >
+
+
+        <button class="btn blood-btn" type="submit">
+
+            🩸 Submit Requirement
+
+        </button>
+
+    </form>
+
+</div>
+
+
+<div class="panel">
+
+    <h2>Blood Requirements</h2>
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Patient</th>
+
+                    <th>Blood Group</th>
+
+                    <th>Units</th>
+
+                    <th>Location</th>
+
+                    <th>Status</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for item in requests %}
+
+                <tr>
+
+                    <td>
+                        {{ item["patient_name"] }}
+                    </td>
+
+                    <td>
+
+                        <span class="blood-badge">
+
+                            {{ item["blood_group"] }}
+
+                        </span>
+
+                    </td>
+
+                    <td>
+                        {{ item["units"] }}
+                    </td>
+
+                    <td>
+                        {{ item["location"] }}
+                    </td>
+
+                    <td>
+
+                        <span class="status open">
+
+                            {{ item["status"] }}
+
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="5" class="empty">
+
+                        No blood requirements.
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<section class="panel">
+
+    <h2>Blood Banks</h2>
+
+    <div class="facility-grid">
+
+        {% for facility in facilities %}
+
+        <div class="facility-card">
+
+            <h3>
+                {{ facility["name"] }}
+            </h3>
+
+            <p>
+                📍 {{ facility["location"] }}
+            </p>
+
+            <p>
+                📞 {{ facility["phone"] }}
+            </p>
+
+            <span class="status open">
+
+                Emergency:
+                {{ facility["emergency_available"] }}
+
+            </span>
+
+        </div>
+
+        {% else %}
+
+        <p>
+            No blood banks added yet.
+        </p>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+{% endblock %}

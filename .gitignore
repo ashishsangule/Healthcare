@@ -1,0 +1,29 @@
+# Python Virtual Environments
+venv/
+.venv/
+careconnect/venv/
+env/
+ENV/
+
+# Python Bytecode and Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment Variables
+.env
+
+# Database (optional local database)
+*.sqlite3
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
