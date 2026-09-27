@@ -1,514 +1,675 @@
-import os
-from flask import Flask, render_template, request, redirect, url_for, jsonify
-from database import get_db, init_db
 from datetime import datetime
 
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    jsonify
+)
+
+from supabase import create_client, Client
+
+
+# =========================================================
+# SUPABASE CONFIGURATION
+# =========================================================
+
+SUPABASE_URL = "https://kubyedexweoutzsteaas.supabase.co"
+
+# IMPORTANT:
+# Paste your NEW Supabase key here.
+# Do NOT share this key in chat or commit it to GitHub.
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1YnllZGV4d2VvdXR6c3RlYWFzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDUyMzcxNCwiZXhwIjoyMTA2MDk5NzE0fQ.9nuEdNrDCBiOnG2di2FkM4CnTdKIoh8kAKvLPTKB6H8"
+
+
+# =========================================================
+# SUPABASE CONNECTION
+# =========================================================
+
+supabase: Client = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
+
+
+# =========================================================
+# FLASK APP
+# =========================================================
+
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "careconnect-secret-key-change-in-production")
 
-# Initialize database
-init_db()
+app.secret_key = "careconnect-secret-key-change-in-production"
 
 
-# --------------------------------------------------
+# =========================================================
 # HOME
-# --------------------------------------------------
+# =========================================================
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
-# --------------------------------------------------
+# =========================================================
 # DASHBOARD
-# --------------------------------------------------
+# =========================================================
 
 @app.route("/dashboard")
 def dashboard():
 
-    conn = get_db()
+    try:
 
-    patients = conn.execute(
-        "SELECT COUNT(*) AS total FROM patients"
-    ).fetchone()["total"]
+        patients_response = (
+            supabase
+            .table("patients")
+            .select("id", count="exact")
+            .execute()
+        )
 
-    appointments = conn.execute(
-        "SELECT COUNT(*) AS total FROM appointments"
-    ).fetchone()["total"]
+        appointments_response = (
+            supabase
+            .table("appointments")
+            .select("id", count="exact")
+            .execute()
+        )
 
-    pending_appointments = conn.execute(
-        "SELECT COUNT(*) AS total FROM appointments WHERE status='Pending'"
-    ).fetchone()["total"]
+        pending_response = (
+            supabase
+            .table("appointments")
+            .select("id", count="exact")
+            .eq("status", "Pending")
+            .execute()
+        )
 
-    ambulance_requests = conn.execute(
-        "SELECT COUNT(*) AS total FROM ambulance_requests"
-    ).fetchone()["total"]
+        ambulance_response = (
+            supabase
+            .table("ambulance_requests")
+            .select("id", count="exact")
+            .execute()
+        )
 
-    blood_requests = conn.execute(
-        "SELECT COUNT(*) AS total FROM blood_requests WHERE status='Open'"
-    ).fetchone()["total"]
+        blood_response = (
+            supabase
+            .table("blood_requests")
+            .select("id", count="exact")
+            .eq("status", "Open")
+            .execute()
+        )
 
-    conn.close()
+        patients = patients_response.count or 0
+        appointments = appointments_response.count or 0
+        pending_appointments = pending_response.count or 0
+        ambulance_requests = ambulance_response.count or 0
+        blood_requests = blood_response.count or 0
 
-    return render_template(
-        "dashboard.html",
-        patients=patients,
-        appointments=appointments,
-        pending_appointments=pending_appointments,
-        ambulance_requests=ambulance_requests,
-        blood_requests=blood_requests
-    )
+        return render_template(
+            "dashboard.html",
+            patients=patients,
+            appointments=appointments,
+            pending_appointments=pending_appointments,
+            ambulance_requests=ambulance_requests,
+            blood_requests=blood_requests
+        )
+
+    except Exception as e:
+
+        return f"Dashboard database error: {e}", 500
 
 
-# --------------------------------------------------
+# =========================================================
 # PATIENTS
-# --------------------------------------------------
+# =========================================================
 
 @app.route("/patients")
 def patients():
 
-    conn = get_db()
+    try:
 
-    search = request.args.get("search", "")
+        search = request.args.get("search", "").strip()
 
-    if search:
+        query = (
+            supabase
+            .table("patients")
+            .select("*")
+            .order("id", desc=True)
+        )
 
-        patients = conn.execute("""
-            SELECT *
-            FROM patients
-            WHERE name LIKE ?
-            OR phone LIKE ?
-            OR blood_group LIKE ?
-            OR location LIKE ?
-            ORDER BY id DESC
-        """, (
-            f"%{search}%",
-            f"%{search}%",
-            f"%{search}%",
-            f"%{search}%"
-        )).fetchall()
+        if search:
 
-    else:
+            query = query.or_(
+                f"name.ilike.%{search}%,"
+                f"phone.ilike.%{search}%,"
+                f"blood_group.ilike.%{search}%,"
+                f"location.ilike.%{search}%"
+            )
 
-        patients = conn.execute("""
-            SELECT *
-            FROM patients
-            ORDER BY id DESC
-        """).fetchall()
+        response = query.execute()
 
-    conn.close()
+        patients_data = response.data or []
 
-    return render_template(
-        "patients.html",
-        patients=patients,
-        search=search
-    )
+        return render_template(
+            "patients.html",
+            patients=patients_data,
+            search=search
+        )
+
+    except Exception as e:
+
+        return f"Patients database error: {e}", 500
 
 
 @app.route("/patients/add", methods=["POST"])
 def add_patient():
 
-    name = request.form["name"]
-    phone = request.form["phone"]
-    age = request.form["age"]
-    gender = request.form["gender"]
-    blood_group = request.form["blood_group"]
-    location = request.form["location"]
+    try:
 
-    conn = get_db()
+        name = request.form["name"]
+        phone = request.form["phone"]
 
-    conn.execute("""
-        INSERT INTO patients
-        (name, phone, age, gender, blood_group, location)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        name,
-        phone,
-        age,
-        gender,
-        blood_group,
-        location
-    ))
+        age = request.form.get("age") or None
+        gender = request.form.get("gender") or None
+        blood_group = request.form.get("blood_group") or None
+        location = request.form.get("location") or None
 
-    conn.commit()
-    conn.close()
+        supabase.table("patients").insert({
 
-    return redirect(url_for("patients"))
+            "name": name,
+            "phone": phone,
+            "age": age,
+            "gender": gender,
+            "blood_group": blood_group,
+            "location": location
+
+        }).execute()
+
+        return redirect(url_for("patients"))
+
+    except Exception as e:
+
+        return f"Add patient error: {e}", 500
 
 
-# --------------------------------------------------
+# =========================================================
 # APPOINTMENTS
-# --------------------------------------------------
+# =========================================================
 
 @app.route("/appointments")
 def appointments():
 
-    conn = get_db()
+    try:
 
-    appointments = conn.execute("""
-        SELECT
-            appointments.*,
-            patients.name AS patient_name,
-            patients.phone AS patient_phone
-        FROM appointments
-        JOIN patients
-        ON appointments.patient_id = patients.id
-        ORDER BY appointment_date, appointment_time
-    """).fetchall()
+        response = (
+            supabase
+            .table("appointments")
+            .select("*, patients(name, phone)")
+            .order("appointment_date")
+            .order("appointment_time")
+            .execute()
+        )
 
-    patients = conn.execute("""
-        SELECT *
-        FROM patients
-        ORDER BY name
-    """).fetchall()
+        appointments_data = []
 
-    conn.close()
+        for item in response.data or []:
 
-    today = datetime.now().strftime("%Y-%m-%d")
+            patient = item.get("patients") or {}
 
-    return render_template(
-        "appointments.html",
-        appointments=appointments,
-        patients=patients,
-        today=today
-    )
+            item["patient_name"] = patient.get(
+                "name",
+                ""
+            )
+
+            item["patient_phone"] = patient.get(
+                "phone",
+                ""
+            )
+
+            appointments_data.append(item)
+
+        patients_response = (
+            supabase
+            .table("patients")
+            .select("*")
+            .order("name")
+            .execute()
+        )
+
+        patients_data = patients_response.data or []
+
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        return render_template(
+            "appointments.html",
+            appointments=appointments_data,
+            patients=patients_data,
+            today=today
+        )
+
+    except Exception as e:
+
+        return f"Appointments database error: {e}", 500
 
 
 @app.route("/appointments/add", methods=["POST"])
 def add_appointment():
 
-    patient_id = request.form["patient_id"]
-    doctor = request.form["doctor"]
-    appointment_date = request.form["appointment_date"]
-    appointment_time = request.form["appointment_time"]
-    reason = request.form["reason"]
+    try:
 
-    conn = get_db()
+        patient_id = request.form["patient_id"]
+        doctor = request.form["doctor"]
+        appointment_date = request.form["appointment_date"]
+        appointment_time = request.form["appointment_time"]
+        reason = request.form.get("reason") or None
 
-    conn.execute("""
-        INSERT INTO appointments
-        (
-            patient_id,
-            doctor,
-            appointment_date,
-            appointment_time,
-            reason
-        )
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        patient_id,
-        doctor,
-        appointment_date,
-        appointment_time,
-        reason
-    ))
+        supabase.table("appointments").insert({
 
-    conn.commit()
-    conn.close()
+            "patient_id": patient_id,
+            "doctor": doctor,
+            "appointment_date": appointment_date,
+            "appointment_time": appointment_time,
+            "reason": reason,
+            "status": "Pending"
 
-    return redirect(url_for("appointments"))
+        }).execute()
+
+        return redirect(url_for("appointments"))
+
+    except Exception as e:
+
+        return f"Add appointment error: {e}", 500
 
 
-@app.route("/appointments/status/<int:appointment_id>/<status>", methods=["GET", "POST"])
-@app.route("/appointments/status/<int:appointment_id>/<status>", methods=["GET", "POST"], endpoint="appointment_status")
-def update_appointment_status(appointment_id, status):
+@app.route(
+    "/appointments/status/<int:appointment_id>/<status>",
+    methods=["GET", "POST"]
+)
+def update_appointment_status(
+    appointment_id,
+    status
+):
 
-    allowed_status = [
-        "Pending",
-        "Confirmed",
-        "Completed",
-        "Cancelled"
-    ]
+    try:
 
-    if status not in allowed_status:
-        return "Invalid status", 400
+        allowed_status = [
+            "Pending",
+            "Confirmed",
+            "Completed",
+            "Cancelled"
+        ]
 
-    conn = get_db()
+        if status not in allowed_status:
+            return "Invalid appointment status", 400
 
-    conn.execute("""
-        UPDATE appointments
-        SET status = ?
-        WHERE id = ?
-    """, (
-        status,
-        appointment_id
-    ))
+        supabase.table("appointments").update({
+            "status": status
+        }).eq(
+            "id",
+            appointment_id
+        ).execute()
 
-    conn.commit()
-    conn.close()
+        return redirect(url_for("appointments"))
 
-    return redirect(url_for("appointments"))
+    except Exception as e:
+
+        return f"Appointment status error: {e}", 500
 
 
-# --------------------------------------------------
+# =========================================================
 # AMBULANCE
-# --------------------------------------------------
+# =========================================================
 
 @app.route("/ambulance")
 def ambulance():
 
-    conn = get_db()
+    try:
 
-    requests_data = conn.execute("""
-        SELECT *
-        FROM ambulance_requests
-        ORDER BY id DESC
-    """).fetchall()
+        response = (
+            supabase
+            .table("ambulance_requests")
+            .select("*")
+            .order("id", desc=True)
+            .execute()
+        )
 
-    conn.close()
+        requests_data = response.data or []
 
-    return render_template(
-        "ambulance.html",
-        requests=requests_data
-    )
+        return render_template(
+            "ambulance.html",
+            requests=requests_data
+        )
+
+    except Exception as e:
+
+        return f"Ambulance database error: {e}", 500
 
 
 @app.route("/ambulance/add", methods=["POST"])
 def add_ambulance():
 
-    patient_name = request.form["patient_name"]
-    phone = request.form["phone"]
-    pickup_location = request.form["pickup_location"]
-    destination = request.form["destination"]
-    emergency_level = request.form["emergency_level"]
+    try:
 
-    conn = get_db()
+        supabase.table("ambulance_requests").insert({
 
-    conn.execute("""
-        INSERT INTO ambulance_requests
-        (
-            patient_name,
-            phone,
-            pickup_location,
-            destination,
-            emergency_level
-        )
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        patient_name,
-        phone,
-        pickup_location,
-        destination,
-        emergency_level
-    ))
+            "patient_name":
+                request.form["patient_name"],
 
-    conn.commit()
-    conn.close()
+            "phone":
+                request.form["phone"],
 
-    return redirect(url_for("ambulance"))
+            "pickup_location":
+                request.form["pickup_location"],
 
+            "destination":
+                request.form.get("destination") or None,
 
-@app.route("/ambulance/status/<int:request_id>/<status>", methods=["GET", "POST"])
-def update_ambulance_status(request_id, status):
+            "emergency_level":
+                request.form.get("emergency_level") or None,
 
-    allowed = [
-        "Requested",
-        "Assigned",
-        "On the Way",
-        "Completed",
-        "Cancelled"
-    ]
+            "status":
+                "Requested"
 
-    if status not in allowed:
-        return "Invalid status", 400
+        }).execute()
 
-    conn = get_db()
+        return redirect(url_for("ambulance"))
 
-    conn.execute("""
-        UPDATE ambulance_requests
-        SET status = ?
-        WHERE id = ?
-    """, (
-        status,
-        request_id
-    ))
+    except Exception as e:
 
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for("ambulance"))
+        return f"Add ambulance request error: {e}", 500
 
 
-# --------------------------------------------------
+@app.route(
+    "/ambulance/status/<int:request_id>/<status>",
+    methods=["GET", "POST"]
+)
+def update_ambulance_status(
+    request_id,
+    status
+):
+
+    try:
+
+        allowed_status = [
+            "Requested",
+            "Assigned",
+            "On the Way",
+            "Completed",
+            "Cancelled"
+        ]
+
+        if status not in allowed_status:
+            return "Invalid ambulance status", 400
+
+        supabase.table("ambulance_requests").update({
+
+            "status": status
+
+        }).eq(
+            "id",
+            request_id
+        ).execute()
+
+        return redirect(url_for("ambulance"))
+
+    except Exception as e:
+
+        return f"Ambulance status error: {e}", 500
+
+
+# =========================================================
 # BLOOD
-# --------------------------------------------------
+# =========================================================
 
 @app.route("/blood")
 def blood():
 
-    conn = get_db()
+    try:
 
-    requests_data = conn.execute("""
-        SELECT *
-        FROM blood_requests
-        ORDER BY id DESC
-    """).fetchall()
+        response = (
+            supabase
+            .table("blood_requests")
+            .select("*")
+            .order("id", desc=True)
+            .execute()
+        )
 
-    facilities = conn.execute("""
-        SELECT *
-        FROM facilities
-        WHERE type = 'Blood Bank'
-        ORDER BY name
-    """).fetchall()
+        requests_data = response.data or []
 
-    conn.close()
+        facilities_response = (
+            supabase
+            .table("facilities")
+            .select("*")
+            .eq("type", "Blood Bank")
+            .order("name")
+            .execute()
+        )
 
-    return render_template(
-        "blood.html",
-        requests=requests_data,
-        facilities=facilities
-    )
+        facilities_data = (
+            facilities_response.data or []
+        )
+
+        return render_template(
+            "blood.html",
+            requests=requests_data,
+            facilities=facilities_data
+        )
+
+    except Exception as e:
+
+        return f"Blood database error: {e}", 500
 
 
 @app.route("/blood/add", methods=["POST"])
 def add_blood_request():
 
-    patient_name = request.form["patient_name"]
-    blood_group = request.form["blood_group"]
-    units = request.form["units"]
-    location = request.form["location"]
-    contact = request.form["contact"]
+    try:
 
-    conn = get_db()
+        supabase.table("blood_requests").insert({
 
-    conn.execute("""
-        INSERT INTO blood_requests
-        (
-            patient_name,
-            blood_group,
-            units,
-            location,
-            contact
-        )
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        patient_name,
-        blood_group,
-        units,
-        location,
-        contact
-    ))
+            "patient_name":
+                request.form["patient_name"],
 
-    conn.commit()
-    conn.close()
+            "blood_group":
+                request.form["blood_group"],
 
-    return redirect(url_for("blood"))
+            "units":
+                int(request.form["units"]),
+
+            "location":
+                request.form["location"],
+
+            "contact":
+                request.form["contact"],
+
+            "status":
+                "Open"
+
+        }).execute()
+
+        return redirect(url_for("blood"))
+
+    except Exception as e:
+
+        return f"Add blood request error: {e}", 500
 
 
-# --------------------------------------------------
+# =========================================================
 # FACILITIES
-# --------------------------------------------------
+# =========================================================
 
 @app.route("/facilities")
 def facilities():
 
-    conn = get_db()
+    try:
 
-    facilities_data = conn.execute("""
-        SELECT *
-        FROM facilities
-        ORDER BY name
-    """).fetchall()
+        response = (
+            supabase
+            .table("facilities")
+            .select("*")
+            .order("name")
+            .execute()
+        )
 
-    conn.close()
+        facilities_data = response.data or []
 
-    return render_template(
-        "facilities.html",
-        facilities=facilities_data
-    )
+        return render_template(
+            "facilities.html",
+            facilities=facilities_data
+        )
+
+    except Exception as e:
+
+        return f"Facilities database error: {e}", 500
 
 
 @app.route("/facilities/add", methods=["POST"])
 def add_facility():
 
-    name = request.form["name"]
-    facility_type = request.form["type"]
-    location = request.form["location"]
-    phone = request.form["phone"]
-    emergency_available = request.form["emergency_available"]
+    try:
 
-    conn = get_db()
+        supabase.table("facilities").insert({
 
-    conn.execute("""
-        INSERT INTO facilities
-        (
-            name,
-            type,
-            location,
-            phone,
-            emergency_available
-        )
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        name,
-        facility_type,
-        location,
-        phone,
-        emergency_available
-    ))
+            "name":
+                request.form["name"],
 
-    conn.commit()
-    conn.close()
+            "type":
+                request.form["type"],
 
-    return redirect(url_for("facilities"))
+            "location":
+                request.form["location"],
+
+            "phone":
+                request.form.get("phone") or None,
+
+            "emergency_available":
+                request.form.get(
+                    "emergency_available",
+                    "Yes"
+                )
+
+        }).execute()
+
+        return redirect(url_for("facilities"))
+
+    except Exception as e:
+
+        return f"Add facility error: {e}", 500
 
 
-# --------------------------------------------------
+# =========================================================
 # API - DASHBOARD STATISTICS
-# --------------------------------------------------
+# =========================================================
 
 @app.route("/api/stats")
 def stats():
 
-    conn = get_db()
+    try:
 
-    data = {
-        "patients": conn.execute(
-            "SELECT COUNT(*) AS total FROM patients"
-        ).fetchone()["total"],
+        patients = (
+            supabase
+            .table("patients")
+            .select("id", count="exact")
+            .execute()
+        )
 
-        "appointments": conn.execute(
-            "SELECT COUNT(*) AS total FROM appointments"
-        ).fetchone()["total"],
+        appointments = (
+            supabase
+            .table("appointments")
+            .select("id", count="exact")
+            .execute()
+        )
 
-        "ambulance": conn.execute(
-            "SELECT COUNT(*) AS total FROM ambulance_requests"
-        ).fetchone()["total"],
+        ambulance = (
+            supabase
+            .table("ambulance_requests")
+            .select("id", count="exact")
+            .execute()
+        )
 
-        "blood": conn.execute(
-            "SELECT COUNT(*) AS total FROM blood_requests"
-        ).fetchone()["total"]
-    }
+        blood = (
+            supabase
+            .table("blood_requests")
+            .select("id", count="exact")
+            .execute()
+        )
 
-    conn.close()
+        return jsonify({
 
-    return jsonify(data)
+            "patients":
+                patients.count or 0,
+
+            "appointments":
+                appointments.count or 0,
+
+            "ambulance":
+                ambulance.count or 0,
+
+            "blood":
+                blood.count or 0
+
+        })
+
+    except Exception as e:
+
+        return jsonify({
+
+            "status": "error",
+            "error": str(e)
+
+        }), 500
 
 
-# --------------------------------------------------
+# =========================================================
 # HEALTH CHECK
-# --------------------------------------------------
+# =========================================================
 
 @app.route("/health")
 def health():
+
     try:
-        conn = get_db()
-        conn.execute("SELECT 1").fetchone()
-        conn.close()
-        return jsonify({"status": "healthy", "database": "connected"}), 200
+
+        supabase.table(
+            "patients"
+        ).select(
+            "id"
+        ).limit(
+            1
+        ).execute()
+
+        return jsonify({
+
+            "status":
+                "healthy",
+
+            "database":
+                "supabase connected"
+
+        }), 200
+
     except Exception as e:
-        return jsonify({"status": "unhealthy", "error": str(e)}), 500
+
+        return jsonify({
+
+            "status":
+                "unhealthy",
+
+            "database":
+                "supabase connection failed",
+
+            "error":
+                str(e)
+
+        }), 500
 
 
-# --------------------------------------------------
-# RUN
-# --------------------------------------------------
+# =========================================================
+# RUN APPLICATION
+# =========================================================
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    debug = os.environ.get("FLASK_DEBUG", "False").lower() in ("true", "1")
+
     app.run(
         host="0.0.0.0",
-        port=port,
-        debug=debug
+        port=5000,
+        debug=False
     )
